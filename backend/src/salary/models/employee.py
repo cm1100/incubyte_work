@@ -6,7 +6,7 @@ from salary.db import Base
 class Employee(Base):
     __tablename__ = "employees"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
     first_name: Mapped[str]
     last_name: Mapped[str]
 
