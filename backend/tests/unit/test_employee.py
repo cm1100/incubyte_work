@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from salary.models.employee import Employee
 
 
@@ -17,3 +19,18 @@ def test_employment_type_defaults_to_full_time():
     employee = Employee(first_name="Asha", last_name="Sharma")
 
     assert employee.employment_type == "full_time"
+
+
+def test_salary_is_stored_as_decimal_not_float():
+    """Salary must stay a Decimal in memory; float would risk silent
+    rounding drift on aggregations later."""
+    employee = Employee(
+        first_name="Asha",
+        last_name="Sharma",
+        salary=Decimal("1234567.89"),
+        currency_code="INR",
+    )
+
+    assert isinstance(employee.salary, Decimal)
+    assert employee.salary == Decimal("1234567.89")
+    assert employee.currency_code == "INR"
