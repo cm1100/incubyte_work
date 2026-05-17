@@ -1,11 +1,13 @@
 # Video Demo Script
 
-A 29-second silent walkthrough is committed at [`docs/demo.mp4`](demo.mp4).
+A 40-second silent walkthrough is committed at [`docs/demo.mp4`](demo.mp4).
 It's a slideshow of Playwright screenshots taken against the live
-CloudFront URL, stitched with `ffmpeg`. Five frames covering: employee
-list (10 K rows), search ("james" → 5 matches), insights summary
+CloudFront URL at 1920×1080, stitched with `ffmpeg`. Six frames
+covering: employee list (10 K rows), search ("james" → 5 matches),
+employee detail/edit page (James Weis, EMP-000123), insights summary
 (10 country rows), country drill-down (percentiles + per-job-title),
-headcount charts.
+headcount charts. Each frame is held for 5 s so the table contents
+stay readable on a Loom-quality replay.
 
 The longer narrated script below is for an optional Loom recording —
 ~4–5 minutes, includes the architecture/TDD/AI-usage walkthrough that
