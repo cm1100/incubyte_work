@@ -26,8 +26,10 @@ from sqlalchemy.orm import Session
 from salary.db import SessionLocal
 from salary.models.employee import Employee
 
-# Path to the seed_data dir, located next to the backend root.
-_SEED_DATA = Path(__file__).resolve().parents[2] / "seed_data"
+# seed_data ships INSIDE the package so `pip install` includes it via
+# package_data — otherwise it's stranded outside site-packages and
+# FileNotFoundError when running from a container or pipx-style install.
+_SEED_DATA = Path(__file__).parent / "seed_data"
 
 
 # (code, currency, salary_min, salary_max) — local-currency realistic ranges.
