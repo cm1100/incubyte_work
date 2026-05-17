@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Index, Numeric, String, func
+from sqlalchemy import CheckConstraint, DateTime, Index, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from salary.db import Base
@@ -47,9 +47,20 @@ class Employee(Base):
         init=False,
     )
 
-    # Composite index for the per-country-per-job-title insight query.
-    __table_args__ = (Index("ix_employees_country_job_title", "country", "job_title"),)
+    __table_args__ = (
+        # Composite index for the per-country-per-job-title insight query.
+        Index("ix_employees_country_job_title", "country", "job_title"),
+        # Defence in depth: the API validates this via Pydantic, but the
+        # seed script bulk-inserts past Pydantic, so the DB has to enforce.
+        CheckConstraint("salary >= 0", name="ck_employees_salary_non_negative"),
+    )
 
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
+
+    def __repr__(self) -> str:
+        return (
+            f"Employee(id={self.id!r}, employee_id={self.employee_id!r}, "
+            f"full_name={self.full_name!r})"
+        )
