@@ -117,6 +117,39 @@ class EmployeeRepository:
             for r in self.session.execute(stmt).mappings().all()
         ]
 
+    _HEADCOUNT_COLUMNS = None  # populated lazily to avoid Employee circular ref at class-body time
+
+    @classmethod
+    def _headcount_column(cls, dimension: str):
+        if cls._HEADCOUNT_COLUMNS is None:
+            cls._HEADCOUNT_COLUMNS = {
+                "country": Employee.country,
+                "department": Employee.department,
+                "job_title": Employee.job_title,
+            }
+        try:
+            return cls._HEADCOUNT_COLUMNS[dimension]
+        except KeyError as e:
+            raise ValueError(f"unsupported headcount dimension: {dimension}") from e
+
+    def headcounts_by(
+        self, dimension: str, status: str = "active", limit: int = 20
+    ) -> list[dict]:
+        """COUNT(*) GROUP BY <dimension>, sorted by count desc, top N.
+        dimension must be one of: country, department, job_title."""
+        column = self._headcount_column(dimension)
+        stmt = (
+            select(column.label("name"), func.count().label("count"))
+            .where(Employee.status == status)
+            .group_by(column)
+            .order_by(func.count().desc(), column)
+            .limit(limit)
+        )
+        return [
+            {"name": r["name"], "count": r["count"]}
+            for r in self.session.execute(stmt).mappings().all()
+        ]
+
     def salaries_by_currency_in_country(
         self, country: str, status: str = "active"
     ) -> dict[str, list[Decimal]]:

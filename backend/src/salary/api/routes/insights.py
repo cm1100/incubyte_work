@@ -6,6 +6,7 @@ from salary.repositories.employee import EmployeeRepository
 from salary.schemas.insights import (
     CountryPercentiles,
     CountrySalarySummary,
+    HeadcountBreakdown,
     JobTitleSalarySummary,
 )
 from salary.services.insights_service import InsightsService
@@ -24,6 +25,11 @@ Country = Path(..., pattern=r"^[A-Z]{2}$", description="ISO 3166 alpha-2")
 @router.get("/by-country", response_model=list[CountrySalarySummary])
 def by_country(service: InsightsService = Depends(_service)) -> list[CountrySalarySummary]:
     return service.country_summaries()
+
+
+@router.get("/headcount", response_model=HeadcountBreakdown)
+def headcount(service: InsightsService = Depends(_service)) -> HeadcountBreakdown:
+    return service.headcount_breakdown()
 
 
 @router.get(

@@ -5,6 +5,8 @@ from salary.repositories.employee import EmployeeRepository
 from salary.schemas.insights import (
     CountryPercentiles,
     CountrySalarySummary,
+    HeadcountBreakdown,
+    HeadcountBucket,
     JobTitleSalarySummary,
 )
 
@@ -33,6 +35,19 @@ class InsightsService:
     def job_summaries_in_country(self, country: str) -> list[JobTitleSalarySummary]:
         rows = self.repo.summarize_jobs_in_country(country, status=self._ACTIVE_ONLY)
         return [JobTitleSalarySummary(**row) for row in rows]
+
+    def headcount_breakdown(self, limit: int = 20) -> HeadcountBreakdown:
+        def _buckets(dimension: str) -> list[HeadcountBucket]:
+            rows = self.repo.headcounts_by(
+                dimension, status=self._ACTIVE_ONLY, limit=limit
+            )
+            return [HeadcountBucket(**row) for row in rows]
+
+        return HeadcountBreakdown(
+            by_country=_buckets("country"),
+            by_department=_buckets("department"),
+            by_job_title=_buckets("job_title"),
+        )
 
     def country_percentile_summaries(self, country: str) -> list[CountryPercentiles]:
         distributions = self.repo.salaries_by_currency_in_country(
