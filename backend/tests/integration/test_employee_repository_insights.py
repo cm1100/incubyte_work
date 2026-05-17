@@ -58,3 +58,55 @@ def test_summarize_by_country_returns_empty_when_no_rows(session):
     repo = EmployeeRepository(session)
 
     assert repo.summarize_by_country(status="active") == []
+
+
+def test_summarize_jobs_in_country_returns_per_title_aggregates(session):
+    repo = EmployeeRepository(session)
+    # IN: 2 Engineers (1000, 3000 → avg 2000), 1 Manager (5000)
+    for i, sal in enumerate([1000, 3000]):
+        repo.create(
+            make_employee(
+                employee_id=f"EMP-ENG-{i}",
+                email=f"eng{i}@x.com",
+                country="IN",
+                currency_code="INR",
+                job_title="Engineer",
+                salary=Decimal(str(sal)),
+            )
+        )
+    repo.create(
+        make_employee(
+            employee_id="EMP-MGR-0",
+            email="mgr@x.com",
+            country="IN",
+            currency_code="INR",
+            job_title="Manager",
+            salary=Decimal("5000"),
+        )
+    )
+    # US Engineer must NOT appear in IN aggregates.
+    repo.create(
+        make_employee(
+            employee_id="EMP-US-ENG-0",
+            email="useng@x.com",
+            country="US",
+            currency_code="USD",
+            job_title="Engineer",
+            salary=Decimal("99999"),
+        )
+    )
+
+    rows = repo.summarize_jobs_in_country("IN", status="active")
+    by_title = {r["job_title"]: r for r in rows}
+
+    assert by_title["Engineer"]["count"] == 2
+    assert by_title["Engineer"]["avg_salary"] == Decimal("2000.00")
+    assert by_title["Manager"]["count"] == 1
+    assert by_title["Manager"]["avg_salary"] == Decimal("5000.00")
+    assert len(by_title) == 2  # US Engineer excluded
+
+
+def test_summarize_jobs_in_unknown_country_returns_empty(session):
+    repo = EmployeeRepository(session)
+
+    assert repo.summarize_jobs_in_country("XX", status="active") == []
