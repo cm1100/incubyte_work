@@ -22,3 +22,8 @@ output "backups_bucket" {
   description = "S3 bucket holding nightly SQLite dumps."
   value       = aws_s3_bucket.backups.bucket
 }
+
+output "cloudfront_url" {
+  description = "Public HTTPS URL served via CloudFront (global edge, TLS terminated at POP)."
+  value       = "https://${aws_cloudfront_distribution.main.domain_name}"
+}
