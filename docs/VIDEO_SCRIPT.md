@@ -1,6 +1,6 @@
 # Video Demo Script
 
-A 31-second silent walkthrough is committed at [`docs/demo.mp4`](demo.mp4).
+A 29-second silent walkthrough is committed at [`docs/demo.mp4`](demo.mp4).
 It's a slideshow of Playwright screenshots taken against the live
 CloudFront URL, stitched with `ffmpeg`. Five frames covering: employee
 list (10 K rows), search ("james" → 5 matches), insights summary
