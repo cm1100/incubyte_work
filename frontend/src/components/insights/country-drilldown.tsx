@@ -46,7 +46,7 @@ export function CountryDrilldown({ country, onCountryChange }: Props) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-4">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <CardTitle>Country drill-down</CardTitle>
         <Select
           value={country}
@@ -70,7 +70,7 @@ export function CountryDrilldown({ country, onCountryChange }: Props) {
           {percentiles.isLoading ? (
             <Skeleton className="h-16 w-full" />
           ) : percentiles.data && percentiles.data.length > 0 ? (
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {percentiles.data.map((p) => (
                 <div key={p.currency_code} className="contents">
                   {(["p25", "p50", "p75", "p90"] as const).map((k) => (
@@ -96,9 +96,9 @@ export function CountryDrilldown({ country, onCountryChange }: Props) {
               <TableRow>
                 <TableHead>Job title</TableHead>
                 <TableHead className="text-right">Count</TableHead>
-                <TableHead className="text-right">Min</TableHead>
+                <TableHead className="hidden md:table-cell text-right">Min</TableHead>
                 <TableHead className="text-right">Avg</TableHead>
-                <TableHead className="text-right">Max</TableHead>
+                <TableHead className="hidden md:table-cell text-right">Max</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -125,13 +125,13 @@ export function CountryDrilldown({ country, onCountryChange }: Props) {
                     <TableCell className="text-right tabular-nums">
                       {j.count.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="hidden md:table-cell text-right tabular-nums">
                       {formatMoney(j.min_salary, j.currency_code)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums font-medium">
                       {formatMoney(j.avg_salary, j.currency_code)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="hidden md:table-cell text-right tabular-nums">
                       {formatMoney(j.max_salary, j.currency_code)}
                     </TableCell>
                   </TableRow>

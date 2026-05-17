@@ -21,16 +21,16 @@ export function CountrySummary() {
       <CardHeader>
         <CardTitle>Salary by country</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Country</TableHead>
-              <TableHead>Currency</TableHead>
+              <TableHead className="hidden sm:table-cell">Currency</TableHead>
               <TableHead className="text-right">Count</TableHead>
-              <TableHead className="text-right">Min</TableHead>
+              <TableHead className="hidden md:table-cell text-right">Min</TableHead>
               <TableHead className="text-right">Avg</TableHead>
-              <TableHead className="text-right">Max</TableHead>
+              <TableHead className="hidden md:table-cell text-right">Max</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,18 +59,26 @@ export function CountrySummary() {
             ) : (
               data?.map((r) => (
                 <TableRow key={`${r.country}-${r.currency_code}`}>
-                  <TableCell className="font-medium">{r.country}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.currency_code}</TableCell>
+                  <TableCell className="font-medium">
+                    {r.country}
+                    {/* Show currency inline on mobile since the column is hidden */}
+                    <span className="text-xs text-muted-foreground sm:hidden ml-1">
+                      {r.currency_code}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-muted-foreground">
+                    {r.currency_code}
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {r.count.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="hidden md:table-cell text-right tabular-nums">
                     {formatMoney(r.min_salary, r.currency_code)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums font-medium">
                     {formatMoney(r.avg_salary, r.currency_code)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="hidden md:table-cell text-right tabular-nums">
                     {formatMoney(r.max_salary, r.currency_code)}
                   </TableCell>
                 </TableRow>

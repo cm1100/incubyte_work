@@ -53,29 +53,30 @@ export function EmployeesTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      {/* flex-wrap so on narrow screens the Add button drops below the search */}
+      <div className="flex flex-wrap items-center gap-3">
         <Input
           placeholder="Search by name, email, or employee ID…"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="max-w-sm"
+          className="flex-1 min-w-[200px] max-w-sm"
         />
-        <div className="ml-auto">
-          <Link href="/employees/new">
-            <Button>Add employee</Button>
-          </Link>
-        </div>
+        <Link href="/employees/new" className="ml-auto">
+          <Button>Add employee</Button>
+        </Link>
       </div>
 
-      <div className="rounded-md border overflow-hidden">
+      {/* Horizontal scroll as a fallback; the column visibility classes below
+          mean users mostly won't need it on common phone widths. */}
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[120px]">ID</TableHead>
+              <TableHead className="hidden sm:table-cell w-[120px]">ID</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Job title</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Country</TableHead>
+              <TableHead className="hidden md:table-cell">Job title</TableHead>
+              <TableHead className="hidden lg:table-cell">Department</TableHead>
+              <TableHead className="hidden md:table-cell">Country</TableHead>
               <TableHead className="text-right">Salary</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
@@ -84,11 +85,13 @@ export function EmployeesTable() {
             {isLoading && !data ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
+                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
                 </TableRow>
               ))
             ) : isError ? (
@@ -106,7 +109,7 @@ export function EmployeesTable() {
             ) : (
               data?.items.map((e) => (
                 <TableRow key={e.id}>
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="font-mono text-xs hidden sm:table-cell">
                     <Link
                       href={`/employees/${e.employee_id}`}
                       className="hover:underline"
@@ -118,11 +121,22 @@ export function EmployeesTable() {
                     <Link href={`/employees/${e.employee_id}`} className="hover:underline">
                       {e.full_name}
                     </Link>
-                    <div className="text-xs text-muted-foreground">{e.email}</div>
+                    {/* Surface hidden context inline on mobile so the row
+                        stays informative — employee_id, email, job/country
+                        all collapse into the Name cell below sm. */}
+                    <div className="text-[10px] text-muted-foreground font-mono sm:hidden">
+                      {e.employee_id}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      {e.email}
+                    </div>
+                    <div className="text-xs text-muted-foreground md:hidden mt-0.5">
+                      {e.job_title} · {e.country}
+                    </div>
                   </TableCell>
-                  <TableCell>{e.job_title}</TableCell>
-                  <TableCell>{e.department}</TableCell>
-                  <TableCell>{e.country}</TableCell>
+                  <TableCell className="hidden md:table-cell">{e.job_title}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{e.department}</TableCell>
+                  <TableCell className="hidden md:table-cell">{e.country}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatMoney(e.salary, e.currency_code)}
                   </TableCell>
