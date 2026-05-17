@@ -148,6 +148,43 @@ tofu destroy
 Wipes everything (instance, EIP, security group, key pair, S3 bucket
 with its contents — `force_destroy = true`). Run when done demoing.
 
+## CloudFront in front of the EC2
+
+After the EC2 is live, `infra/cdn.tf` adds a CloudFront distribution
+that fronts the same EC2 origin. Two URLs end up live:
+
+- **CloudFront**: `https://dXXXXXXX.cloudfront.net` (preferred for users)
+- **Origin direct**: `https://{eip}.sslip.io` (also works; kept for SSH/debug)
+
+### What CloudFront adds
+
+- TLS termination at the nearest edge POP (50+ globally) — lower
+  latency for users outside Mumbai.
+- 1-year cache for `/_next/static/*` (Next.js content-hashes these
+  filenames, so the long TTL is safe).
+- AWS Shield Standard (free) at the edge.
+- HTTP/3 + HTTP/2, IPv6, TLSv1.2_2021 minimum.
+
+### The one configuration gotcha worth understanding
+
+CloudFront uses `Managed-AllViewerExceptHostHeader` as the origin
+request policy. That **exception** matters: CloudFront forwards every
+viewer header *except* `Host`, and sets `Host` to the **origin's**
+hostname (`{eip}.sslip.io`). So Caddy's `{$DOMAIN}` matcher still
+fires — without that policy, viewers hitting the `cloudfront.net`
+URL would send `Host: dXXXX.cloudfront.net` and Caddy would 404.
+
+### Apply / tear-down
+
+```bash
+cd infra
+tofu apply                                # adds 1 resource, ~10 min for CF
+tofu output cloudfront_url                # → https://dXXXX.cloudfront.net
+tofu destroy -target=aws_cloudfront_distribution.main   # remove just CF
+```
+
+CloudFront distribution disable+delete takes ~15 min during destroy.
+
 ## Cost
 
 | Item | Monthly |
@@ -157,6 +194,7 @@ with its contents — `force_destroy = true`). Run when done demoing.
 | Elastic IP (while attached) | $0 |
 | S3 backups (a few MB) | <$0.01 |
 | Data transfer (light demo) | <$0.50 |
+| CloudFront (free tier: 1 TB out + 10 M req/mo for 12 mo) | $0 |
 | **Total** | **~$5/mo** |
 
 Tear down between demos to drop to $0.
@@ -170,5 +208,7 @@ Honest list — see git log for the actual commits:
 3. **`def list` shadowed `list[dict]` annotation** on Python 3.12. Local Python 3.14 has PEP 649 lazy annotations enabled so the import never failed locally. Fixed with `from __future__ import annotations`.
 4. **EIP-vs-IMDS race**: user-data captured the EC2's *temporary* public IP before the Elastic IP attached. Caddy got a Let's Encrypt cert for the wrong sslip hostname. Fixed by passing the EIP into the user-data via Terraform's `templatefile`.
 5. **`seed_data/` outside the package** → not shipped by `pip install`. Moved inside `src/salary/seed_data/` and added `package-data` config in pyproject.toml.
+6. **Node OOM during `next build` on t4g.nano** (0.5 GB RAM) — V8 tried to grow into swap and SIGABRT'd. Fixed with `NODE_OPTIONS=--max-old-space-size=768` in the builder stage and bumping the user-data swapfile from 1 GB to 2 GB.
+7. **Caddy serving stale Caddyfile after `git pull`** — git's atomic replace orphaned the bind-mounted inode; Caddy was still looking at the deleted file. `docker compose up -d --force-recreate caddy` re-resolved the mount.
 
 Each was caught by smoke-testing against the deployed instance, not just by tests passing locally.

@@ -158,6 +158,33 @@ failed because I'd never added the middleware. Fixed in a 17-line commit
 that reads CORS_ORIGINS from env so prod doesn't need a rebuild for new
 origins.
 
+### Node OOM during `next build` on t4g.nano (Phase 6 deploy)
+
+EC2 build crashed with:
+
+> FATAL ERROR: Ineffective mark-compacts near heap limit
+> Allocation failed - JavaScript heap out of memory
+> Next.js build worker exited with code: null and signal: SIGABRT
+
+t4g.nano is 408 MB RAM + 1 GB swap. V8's default
+`--max-old-space-size` is 4 GB, so Node tried to grow into swap, the
+working set didn't fit, the kernel OOM-killer fired. Fixed by capping
+the heap (`NODE_OPTIONS=--max-old-space-size=768`) so V8 GCs early
+*and* bumping the swapfile from 1 GB to 2 GB so the bounded heap plus
+node_modules plus the Next.js compiler all fit. Build went from
+crash-at-22-min to clean-at-5-min.
+
+### Caddy serving stale Caddyfile after `git pull` (Phase 6 deploy)
+
+After `git pull` brought in the new Caddyfile (split `/api/*` →
+FastAPI, `/*` → Next.js), Caddy's `exec caddy reload` reported success
+but kept proxying everything to FastAPI. Diagnosis: `git pull` replaces
+files atomically (write new file → rename over old), which **orphans the
+inode the docker bind mount was pointing at**. Caddy was still reading
+the deleted file via its old fd. Fix: `docker compose up -d
+--force-recreate caddy` to re-resolve the bind mount path. Now baked
+into the redeploy snippet in DEPLOY.md.
+
 ## Where AI caught things I would have missed
 
 - **App Runner being in maintenance mode.** I picked App Runner as the
