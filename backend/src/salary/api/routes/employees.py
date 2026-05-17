@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from salary.db import get_session
 from salary.models.employee import Employee
 from salary.repositories.employee import EmployeeRepository
-from salary.schemas.employee import EmployeeCreate, EmployeePage, EmployeeRead
+from salary.schemas.employee import (
+    EmployeeCreate,
+    EmployeePage,
+    EmployeeRead,
+    EmployeeUpdate,
+)
 
 # No service layer for plain CRUD — the route is thin and the repo is
 # SQL-only. A service module appears in Phase 3 when insights need real
@@ -32,6 +37,32 @@ def get_employee(
     if employee is None:
         raise HTTPException(status_code=404, detail="employee not found")
     return employee
+
+
+@router.patch("/{employee_id}", response_model=EmployeeRead)
+def update_employee(
+    employee_id: str,
+    payload: EmployeeUpdate,
+    session: Session = Depends(get_session),
+) -> Employee:
+    repo = EmployeeRepository(session)
+    employee = repo.get_by_employee_id(employee_id)
+    if employee is None:
+        raise HTTPException(status_code=404, detail="employee not found")
+    # exclude_unset so a missing key means 'don't change', not 'set to None'.
+    return repo.update(employee.id, **payload.model_dump(exclude_unset=True))
+
+
+@router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_employee(
+    employee_id: str,
+    session: Session = Depends(get_session),
+) -> None:
+    repo = EmployeeRepository(session)
+    employee = repo.get_by_employee_id(employee_id)
+    if employee is None:
+        raise HTTPException(status_code=404, detail="employee not found")
+    repo.delete(employee.id)
 
 
 @router.get("", response_model=EmployeePage)
