@@ -22,3 +22,50 @@ class EmployeeRepository:
 
     def get_by_id(self, employee_id: int) -> Employee | None:
         return self.session.get(Employee, employee_id)
+
+    def list(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> tuple[list[Employee], int]:
+        """Return (page, total). Total is the count *after* filtering so
+        the UI can render 'showing 50 of 327'."""
+        stmt = select(Employee)
+        count_stmt = select(func.count()).select_from(Employee)
+
+        if search:
+            like = f"%{search}%"
+            condition = or_(
+                Employee.first_name.ilike(like),
+                Employee.last_name.ilike(like),
+                Employee.email.ilike(like),
+                Employee.employee_id.ilike(like),
+            )
+            stmt = stmt.where(condition)
+            count_stmt = count_stmt.where(condition)
+
+        total = self.session.scalar(count_stmt) or 0
+        items = list(
+            self.session.scalars(stmt.order_by(Employee.id).offset(offset).limit(limit))
+        )
+        return items, total
+
+    def update(self, employee_id: int, **fields) -> Employee | None:
+        employee = self.get_by_id(employee_id)
+        if employee is None:
+            return None
+        for key, value in fields.items():
+            setattr(employee, key, value)
+        self.session.flush()
+        self.session.refresh(employee)
+        return employee
+
+    def delete(self, employee_id: int) -> bool:
+        employee = self.get_by_id(employee_id)
+        if employee is None:
+            return False
+        self.session.delete(employee)
+        self.session.flush()
+        return True
