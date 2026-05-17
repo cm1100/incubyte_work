@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from salary.api.routes.employees import router as employees_router
+from salary.api.routes.insights import router as insights_router
 
 
 def create_app() -> FastAPI:
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(employees_router)
+    app.include_router(insights_router)
 
     @app.get("/health")
     def health() -> dict[str, str]:

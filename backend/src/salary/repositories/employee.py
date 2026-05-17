@@ -1,7 +1,16 @@
+from decimal import Decimal
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from salary.models.employee import Employee
+
+
+def _money(value) -> Decimal:
+    """Coerce DB aggregate output to Decimal with money precision.
+    SQLite returns NUMERIC aggregates as Decimal already, but some drivers
+    return float; str() bridges either case without precision loss."""
+    return Decimal(str(value)).quantize(Decimal("0.01"))
 
 
 class EmployeeRepository:
@@ -76,3 +85,34 @@ class EmployeeRepository:
         self.session.delete(employee)
         self.session.flush()
         return True
+
+    # ---------- aggregations for insights ----------
+
+    def summarize_by_country(self, status: str = "active") -> list[dict]:
+        """Per (country, currency) aggregates over rows matching status.
+        SUM + count divided in Python preserves Decimal precision; SQL
+        AVG would coerce to float on SQLite."""
+        stmt = (
+            select(
+                Employee.country,
+                Employee.currency_code,
+                func.count().label("count"),
+                func.min(Employee.salary).label("min_salary"),
+                func.max(Employee.salary).label("max_salary"),
+                func.sum(Employee.salary).label("sum_salary"),
+            )
+            .where(Employee.status == status)
+            .group_by(Employee.country, Employee.currency_code)
+            .order_by(Employee.country, Employee.currency_code)
+        )
+        return [
+            {
+                "country": r["country"],
+                "currency_code": r["currency_code"],
+                "count": r["count"],
+                "min_salary": _money(r["min_salary"]),
+                "max_salary": _money(r["max_salary"]),
+                "avg_salary": _money(Decimal(str(r["sum_salary"])) / r["count"]),
+            }
+            for r in self.session.execute(stmt).mappings().all()
+        ]
