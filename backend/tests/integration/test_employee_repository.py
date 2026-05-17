@@ -35,6 +35,27 @@ def test_get_by_id_returns_none_when_missing(session):
     assert repo.get_by_id(99999) is None
 
 
+# ---------- lookup by human-readable employee_id ----------
+
+
+def test_get_by_employee_id_returns_matching_row(session):
+    """employee_id is the natural key HR uses (EMP-00042). The API URLs
+    will use it, so the repo needs a direct lookup."""
+    repo = EmployeeRepository(session)
+    repo.create(make_employee(employee_id="EMP-00099", email="z@x.com"))
+
+    found = repo.get_by_employee_id("EMP-00099")
+
+    assert found is not None
+    assert found.email == "z@x.com"
+
+
+def test_get_by_employee_id_returns_none_when_missing(session):
+    repo = EmployeeRepository(session)
+
+    assert repo.get_by_employee_id("EMP-NOPE") is None
+
+
 # ---------- list (pagination + search) ----------
 
 
