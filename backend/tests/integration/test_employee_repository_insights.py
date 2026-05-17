@@ -110,3 +110,33 @@ def test_summarize_jobs_in_unknown_country_returns_empty(session):
     repo = EmployeeRepository(session)
 
     assert repo.summarize_jobs_in_country("XX", status="active") == []
+
+
+def test_salaries_by_currency_in_country_groups_and_orders(session):
+    """Returns {currency_code: sorted [salaries]} so the service can run
+    percentile math without further sorting."""
+    repo = EmployeeRepository(session)
+    for i, sal in enumerate([300, 100, 200]):
+        repo.create(
+            make_employee(
+                employee_id=f"EMP-IN-{i}",
+                email=f"in{i}@x.com",
+                country="IN",
+                currency_code="INR",
+                salary=Decimal(str(sal)),
+            )
+        )
+    repo.create(
+        make_employee(
+            employee_id="EMP-IN-T",
+            email="int@x.com",
+            country="IN",
+            currency_code="INR",
+            salary=Decimal("9999"),
+            status="terminated",
+        )
+    )
+
+    result = repo.salaries_by_currency_in_country("IN", status="active")
+
+    assert result == {"INR": [Decimal("100.00"), Decimal("200.00"), Decimal("300.00")]}
