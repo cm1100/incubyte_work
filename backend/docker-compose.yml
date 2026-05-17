@@ -1,0 +1,31 @@
+services:
+  api:
+    build: .
+    expose:
+      - "8000"
+    volumes:
+      - app_data:/app/data
+    environment:
+      DATABASE_URL: sqlite:////app/data/app.db
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    restart: unless-stopped
+
+volumes:
+  app_data: # named volume so the SQLite file survives `docker compose down`
+  caddy_data:
+  caddy_config:

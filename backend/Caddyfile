@@ -1,0 +1,13 @@
+{$DOMAIN} {
+    # Caddy auto-provisions a Let's Encrypt cert for {$DOMAIN} on first
+    # request using the ACME HTTP-01 challenge — that's why the security
+    # group has to allow inbound 80, even though we redirect users to 443.
+
+    encode gzip
+    reverse_proxy api:8000
+
+    log {
+        output stdout
+        format console
+    }
+}
