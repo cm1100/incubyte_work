@@ -17,6 +17,11 @@ COPY . .
 # all API calls go to /api/* — no NEXT_PUBLIC_API_URL needed at build time.
 ENV NEXT_PUBLIC_API_URL=
 ENV NEXT_TELEMETRY_DISABLED=1
+# Cap V8 heap so it GCs early on a tiny EC2 (t4g.nano = 408 MB RAM + 2 GB
+# swap). Default --max-old-space-size of 4 GB makes Node try to grow into
+# swap and OOM-kill itself. 768 MB keeps the working set inside RAM + a
+# bit of swap, build takes ~5 min on ARM nano but completes reliably.
+ENV NODE_OPTIONS=--max-old-space-size=768
 RUN npm run build
 
 # ----- runtime --------------------------------------------------------------
