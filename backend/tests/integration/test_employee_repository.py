@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from salary.repositories.employee import EmployeeRepository
 from tests.factories import make_employee
@@ -47,6 +50,17 @@ def _seed(session, count: int) -> EmployeeRepository:
             )
         )
     return repo
+
+
+def test_list_returns_empty_page_and_zero_total_when_no_rows(session):
+    """Empty store must still produce a well-formed (items, total) pair —
+    the UI relies on this to render 'no results' instead of crashing."""
+    repo = EmployeeRepository(session)
+
+    items, total = repo.list(offset=0, limit=10)
+
+    assert items == []
+    assert total == 0
 
 
 def test_list_returns_items_and_total_count(session):
@@ -113,14 +127,22 @@ def test_delete_returns_false_when_missing(session):
     assert repo.delete(99999) is False
 
 
-# ---------- uniqueness (dedup contract) ----------
+# ---------- integrity contracts ----------
 
 
 def test_duplicate_email_raises_integrity_error(session):
-    from sqlalchemy.exc import IntegrityError
-
     repo = EmployeeRepository(session)
     repo.create(make_employee(employee_id="EMP-A", email="dup@example.com"))
 
     with pytest.raises(IntegrityError):
         repo.create(make_employee(employee_id="EMP-B", email="dup@example.com"))
+
+
+def test_negative_salary_is_rejected_by_db_constraint(session):
+    """Defence in depth. The Pydantic schema will reject this at the API
+    boundary, but the seed script writes via bulk insert without that
+    layer — the DB has to enforce."""
+    repo = EmployeeRepository(session)
+
+    with pytest.raises(IntegrityError):
+        repo.create(make_employee(salary=Decimal("-1.00")))
