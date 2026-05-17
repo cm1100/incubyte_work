@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from salary.db import get_session
 from salary.models.employee import Employee
 from salary.repositories.employee import EmployeeRepository
-from salary.schemas.employee import EmployeeCreate, EmployeeRead
+from salary.schemas.employee import EmployeeCreate, EmployeePage, EmployeeRead
 
 # No service layer for plain CRUD — the route is thin and the repo is
 # SQL-only. A service module appears in Phase 3 when insights need real
@@ -20,3 +20,20 @@ def create_employee(
     repo = EmployeeRepository(session)
     employee = Employee(**payload.model_dump())
     return repo.create(employee)
+
+
+@router.get("", response_model=EmployeePage)
+def list_employees(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    search: str | None = Query(None, min_length=1, max_length=100),
+    session: Session = Depends(get_session),
+) -> EmployeePage:
+    repo = EmployeeRepository(session)
+    items, total = repo.list(offset=offset, limit=limit, search=search)
+    return EmployeePage(
+        items=[EmployeeRead.model_validate(i) for i in items],
+        total=total,
+        offset=offset,
+        limit=limit,
+    )
