@@ -1,4 +1,7 @@
+import os
+
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
@@ -8,6 +11,20 @@ from salary.api.routes.insights import router as insights_router
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Salary Management API", version="0.1.0")
+
+    # Browser CORS — frontend lives on a different origin in dev (3000)
+    # and in prod (Amplify subdomain). Comma-sep env var overrides.
+    cors_origins = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    ).split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in cors_origins if o.strip()],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.exception_handler(IntegrityError)
     async def _integrity_handler(_: Request, __: IntegrityError) -> JSONResponse:
