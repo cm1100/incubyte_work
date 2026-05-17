@@ -23,6 +23,13 @@ class EmployeeRepository:
     def get_by_id(self, employee_id: int) -> Employee | None:
         return self.session.get(Employee, employee_id)
 
+    def get_by_employee_id(self, employee_id: str) -> Employee | None:
+        """Lookup by the human-readable EMP-XXXXX key. Used by the API
+        URLs (/employees/EMP-00042) since that's what HR navigates with."""
+        return self.session.scalar(
+            select(Employee).where(Employee.employee_id == employee_id)
+        )
+
     def list(
         self,
         *,

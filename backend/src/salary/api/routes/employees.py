@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from salary.db import get_session
@@ -20,6 +20,18 @@ def create_employee(
     repo = EmployeeRepository(session)
     employee = Employee(**payload.model_dump())
     return repo.create(employee)
+
+
+@router.get("/{employee_id}", response_model=EmployeeRead)
+def get_employee(
+    employee_id: str,
+    session: Session = Depends(get_session),
+) -> Employee:
+    repo = EmployeeRepository(session)
+    employee = repo.get_by_employee_id(employee_id)
+    if employee is None:
+        raise HTTPException(status_code=404, detail="employee not found")
+    return employee
 
 
 @router.get("", response_model=EmployeePage)
