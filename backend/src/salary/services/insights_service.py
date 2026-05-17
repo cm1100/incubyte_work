@@ -1,5 +1,5 @@
 from salary.repositories.employee import EmployeeRepository
-from salary.schemas.insights import CountrySalarySummary
+from salary.schemas.insights import CountrySalarySummary, JobTitleSalarySummary
 
 
 class InsightsService:
@@ -18,3 +18,7 @@ class InsightsService:
     def country_summaries(self) -> list[CountrySalarySummary]:
         rows = self.repo.summarize_by_country(status=self._ACTIVE_ONLY)
         return [CountrySalarySummary(**row) for row in rows]
+
+    def job_summaries_in_country(self, country: str) -> list[JobTitleSalarySummary]:
+        rows = self.repo.summarize_jobs_in_country(country, status=self._ACTIVE_ONLY)
+        return [JobTitleSalarySummary(**row) for row in rows]

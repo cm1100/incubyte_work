@@ -116,3 +116,34 @@ class EmployeeRepository:
             }
             for r in self.session.execute(stmt).mappings().all()
         ]
+
+    def summarize_jobs_in_country(
+        self, country: str, status: str = "active"
+    ) -> list[dict]:
+        """Per (job_title, currency_code) aggregates inside one country.
+        Uses the composite (country, job_title) index for the WHERE +
+        GROUP BY."""
+        stmt = (
+            select(
+                Employee.job_title,
+                Employee.currency_code,
+                func.count().label("count"),
+                func.min(Employee.salary).label("min_salary"),
+                func.max(Employee.salary).label("max_salary"),
+                func.sum(Employee.salary).label("sum_salary"),
+            )
+            .where(Employee.country == country, Employee.status == status)
+            .group_by(Employee.job_title, Employee.currency_code)
+            .order_by(Employee.job_title, Employee.currency_code)
+        )
+        return [
+            {
+                "job_title": r["job_title"],
+                "currency_code": r["currency_code"],
+                "count": r["count"],
+                "min_salary": _money(r["min_salary"]),
+                "max_salary": _money(r["max_salary"]),
+                "avg_salary": _money(Decimal(str(r["sum_salary"])) / r["count"]),
+            }
+            for r in self.session.execute(stmt).mappings().all()
+        ]
