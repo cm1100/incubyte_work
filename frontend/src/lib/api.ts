@@ -9,8 +9,12 @@ import type {
   JobTitleSalarySummary,
 } from "@/lib/types";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8765";
+// In prod the frontend and FastAPI share an origin behind Caddy:
+//   Caddy routes /api/* → FastAPI :8000, /* → Next.js :3000.
+// So the default BASE_URL is "/api" (same-origin, no CORS).
+// Dev override: set NEXT_PUBLIC_API_URL to a remote backend (e.g. an
+// EC2 URL) when running `next dev` against a non-local API.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export class ApiError extends Error {
   constructor(

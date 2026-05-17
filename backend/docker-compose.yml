@@ -7,13 +7,25 @@ services:
       - app_data:/app/data
     environment:
       DATABASE_URL: sqlite:////app/data/app.db
+      # Same-origin via Caddy means no browser-side cross-origin requests;
+      # CORS only needs to allow the dev URL for local 'next dev' against
+      # this backend, which is opt-in.
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     restart: unless-stopped
+
+  frontend:
+    build: ../frontend
+    expose:
+      - "3000"
+    restart: unless-stopped
+    depends_on:
+      - api
 
   caddy:
     image: caddy:2-alpine
     depends_on:
       - api
+      - frontend
     ports:
       - "80:80"
       - "443:443"

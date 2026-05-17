@@ -4,10 +4,20 @@
     # group has to allow inbound 80, even though we redirect users to 443.
 
     encode gzip
-    reverse_proxy api:8000
+
+    # Backend API: strip the /api prefix so FastAPI sees its native routes
+    # (/employees, /insights/..., /health) without being aware of the
+    # mount path.
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Everything else → the Next.js standalone server.
+    reverse_proxy frontend:3000
 
     log {
         output stdout
         format console
     }
 }
+
