@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from salary import models  # noqa: F401 — registers tables on Base.metadata
 from salary.db import Base
@@ -13,7 +14,15 @@ from salary.main import app
 
 @pytest.fixture
 def engine():
-    eng = create_engine("sqlite:///:memory:", future=True)
+    # check_same_thread=False + StaticPool so the in-memory DB is shared
+    # across threads (FastAPI TestClient dispatches sync handlers to a
+    # worker thread). Each test still gets its own fresh DB.
+    eng = create_engine(
+        "sqlite:///:memory:",
+        future=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(eng)
     yield eng
     eng.dispose()
