@@ -9,6 +9,7 @@ Built as the [Incubyte Software Craftsperson assessment](https://blog.incubyte.c
 |---|---|
 | **App via CloudFront** (recommended) | https://d334cun2ulu6ii.cloudfront.net |
 | **App direct from EC2** | https://13-202-206-123.sslip.io |
+| **Demo video** (31 s, silent) | [`docs/demo.mp4`](docs/demo.mp4) |
 
 Same app behind both URLs — Caddy on EC2 serves the Next.js frontend
 and proxies `/api/*` to FastAPI; CloudFront sits in front for edge TLS

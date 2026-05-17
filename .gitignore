@@ -44,3 +44,4 @@ cdk.out/
 # Logs
 *.log
 .playwright-mcp/
+.frames/

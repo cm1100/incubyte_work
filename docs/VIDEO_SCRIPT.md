@@ -1,7 +1,18 @@
 # Video Demo Script
 
-~4-5 minute Loom or screen recording. Use the **live CloudFront URL**
-throughout so the reviewer sees the actual deployed app:
+A 31-second silent walkthrough is committed at [`docs/demo.mp4`](demo.mp4).
+It's a slideshow of Playwright screenshots taken against the live
+CloudFront URL, stitched with `ffmpeg`. Five frames covering: employee
+list (10 K rows), search ("james" → 5 matches), insights summary
+(10 country rows), country drill-down (percentiles + per-job-title),
+headcount charts.
+
+The longer narrated script below is for an optional Loom recording —
+~4–5 minutes, includes the architecture/TDD/AI-usage walkthrough that
+the silent demo can't convey.
+
+Use the **live CloudFront URL** throughout so the reviewer sees the
+actual deployed app:
 
 `https://d334cun2ulu6ii.cloudfront.net`
 
