@@ -9,6 +9,17 @@ LOG=/var/log/user-data.log
 exec > >(tee -a "$LOG") 2>&1
 echo "[user-data] starting at $(date -u)"
 
+# ----- swap (t4g.nano has 408 MB RAM; pip install can spike past that) -----
+# 1 GB swap on the root volume is enough for the docker build phase and
+# is the standard mitigation for tiny instances. EBS gp3 IOPS are plenty.
+if ! swapon --show | grep -q '/swapfile'; then
+    fallocate -l 1G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile >/dev/null
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
 # ----- packages -----
 export DEBIAN_FRONTEND=noninteractive
 apt-get update

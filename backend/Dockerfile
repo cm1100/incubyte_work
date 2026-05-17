@@ -10,19 +10,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install deps first as a separate layer so source changes don't bust
-# the pip install cache.
-COPY pyproject.toml ./
+# Copy everything before pip install — src-layout means setuptools needs
+# src/ visible at install time to discover packages. We get layer-cache
+# benefits from the base image and ENV/WORKDIR layers; deps re-resolve
+# only when project files change (which is fine at this scale).
+COPY . .
+
 RUN pip install --no-cache-dir .
-
-# App code
-COPY src/ src/
-COPY alembic.ini ./
-COPY alembic/ alembic/
-COPY seed_data/ seed_data/
-
-# SQLite file lives on a bind-mounted host volume (see docker-compose.yml)
-# so it survives container restarts. Path is created at runtime by Compose.
 
 EXPOSE 8000
 
