@@ -1,0 +1,11 @@
+# OpenTofu / Terraform state and locals
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+
+# Locally generated SSH key for EC2 access
+ec2_key
+ec2_key.pub
