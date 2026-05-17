@@ -57,14 +57,10 @@ fi
 cd "$APP_DIR/backend"
 
 # ----- runtime env -----
-# IP comes from instance metadata so the script works on any IP we land
-# on (Elastic IP association is a separate Terraform resource and may not
-# be in place at first boot).
-TOKEN=$(curl -fsS -X PUT \
-    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" \
-    http://169.254.169.254/latest/api/token)
-PUBLIC_IP=$(curl -fsS -H "X-aws-ec2-metadata-token: $TOKEN" \
-    http://169.254.169.254/latest/meta-data/public-ipv4)
+# IP is injected by Terraform templatefile — that's the EIP, not whatever
+# the instance happens to boot with. Otherwise user-data races the EIP
+# association and Caddy provisions a cert for the wrong sslip hostname.
+PUBLIC_IP="${public_ip}"
 SSLIP_HOST=$(echo "$PUBLIC_IP" | tr '.' '-').sslip.io
 
 cat > .env <<EOF

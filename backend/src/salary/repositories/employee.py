@@ -1,3 +1,11 @@
+# Lazy annotation evaluation so `list[dict]` in method signatures doesn't
+# break on Python 3.12, where the `def list(self, ...)` method below shadows
+# the `list` builtin in the class-body namespace by the time later
+# annotations are eagerly evaluated. PEP 649 makes this a no-op on 3.14+,
+# where annotations are already deferred. Local dev runs 3.14, prod runs
+# 3.12 in the container — caught when the container kept restart-looping.
+from __future__ import annotations
+
 from decimal import Decimal
 
 from sqlalchemy import func, or_, select

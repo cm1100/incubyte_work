@@ -104,8 +104,16 @@ resource "aws_instance" "api" {
   # The bootstrap script clones the repo, installs Docker, and brings the
   # stack up. Re-reading the file at apply time means an edit to the
   # template forces a re-provision.
+  #
+  # Pass the EIP's public_ip in so Caddy gets configured for the SAME
+  # hostname the world will reach us on. The EIP resource exists before
+  # the instance (no depends_on needed — terraform infers it from the
+  # template var), so the value is known at user-data render time. This
+  # avoids the IMDS-vs-EIP race where user-data would otherwise capture
+  # the instance's temporary public IP before the EIP attaches.
   user_data = templatefile("${path.module}/user-data.sh", {
     clone_url     = var.github_clone_url
+    public_ip     = aws_eip.api.public_ip
     backup_bucket = aws_s3_bucket.backups.bucket
   })
 
