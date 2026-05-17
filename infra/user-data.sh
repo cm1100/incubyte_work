@@ -13,7 +13,14 @@ echo "[user-data] starting at $(date -u)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y \
-    ca-certificates curl gnupg git sqlite3 awscli
+    ca-certificates curl gnupg git sqlite3
+
+# AWS CLI: Ubuntu 24.04 dropped the apt 'awscli' package. Use snap
+# (pre-installed on Ubuntu cloud images) for the official AWS-maintained
+# build instead.
+snap install aws-cli --classic
+# Symlink so /usr/local/bin/aws is on PATH for cron-invoked scripts.
+ln -sf /snap/bin/aws /usr/local/bin/aws
 
 # Docker Engine + Compose v2 plugin from the official Docker apt repo.
 # Ubuntu's distro docker.io lags well behind upstream.
