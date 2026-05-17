@@ -117,6 +117,21 @@ class EmployeeRepository:
             for r in self.session.execute(stmt).mappings().all()
         ]
 
+    def salaries_by_currency_in_country(
+        self, country: str, status: str = "active"
+    ) -> dict[str, list[Decimal]]:
+        """Returns {currency_code: ASC-sorted list[Decimal]} so the service
+        can run percentile math without re-sorting."""
+        stmt = (
+            select(Employee.currency_code, Employee.salary)
+            .where(Employee.country == country, Employee.status == status)
+            .order_by(Employee.currency_code, Employee.salary)
+        )
+        result: dict[str, list[Decimal]] = {}
+        for currency, salary in self.session.execute(stmt).all():
+            result.setdefault(currency, []).append(_money(salary))
+        return result
+
     def summarize_jobs_in_country(
         self, country: str, status: str = "active"
     ) -> list[dict]:

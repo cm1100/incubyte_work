@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 
 from salary.db import get_session
 from salary.repositories.employee import EmployeeRepository
-from salary.schemas.insights import CountrySalarySummary, JobTitleSalarySummary
+from salary.schemas.insights import (
+    CountryPercentiles,
+    CountrySalarySummary,
+    JobTitleSalarySummary,
+)
 from salary.services.insights_service import InsightsService
 
 router = APIRouter(prefix="/insights", tags=["insights"])
@@ -31,3 +35,14 @@ def by_job_title_in_country(
     service: InsightsService = Depends(_service),
 ) -> list[JobTitleSalarySummary]:
     return service.job_summaries_in_country(country)
+
+
+@router.get(
+    "/by-country/{country}/percentiles",
+    response_model=list[CountryPercentiles],
+)
+def country_percentiles(
+    country: str = Country,
+    service: InsightsService = Depends(_service),
+) -> list[CountryPercentiles]:
+    return service.country_percentile_summaries(country)
